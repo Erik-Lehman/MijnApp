@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Shopping/To-Do List</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="stylesheet" href="jquery.mobile-1.0.1.min.css" />
+<script src="jquery.min.js"></script>
+<script src="jquery.mobile-1.0.1.min.js"></script>
+<style type="text/css">
+/*
+body {
+    background: url(photo.jpg);
+    background-position:center center;
+    background-attachment:scroll;
+    background-size:100% 100%;  /* De foto zie je altijd helemaal, wordt dus vervormd
+}
+.ui-page {
+    background: transparent;
+}
+.ui-content{
+    background: transparent;
+}
+ */
+.background_page1 {
+    background: url(photo.jpg);
+    background-position:center center;
+    background-attachment:scroll;
+    background-size:100% 100%;  /* De foto zie je altijd helemaal, wordt dus vervormd */
+}
+.background_page2 {
+    background: url(photo2.jpg);
+    background-position:center center;
+    background-attachment:scroll;
+    background-size:100% 100%;  /* De foto zie je altijd helemaal, wordt dus vervormd */
+}
+.titel{
+	margin-right:20px;
+}
+.div_titel{
+	width:125px;
+	float:left;
+}
+</style>
+</head> 
+<body>
+<div id="index" data-url="index" data-role="page">
+    <div data-role="header">
+        <p style="text-align:center;margin:5px">Shopping/To-Do List</p>
+    </div>
+
+    <div data-role="content">
+        <a href="#shopping" data-role="button">Shopping List</a>
+        <a href="#todo" data-role="button">To Do List</a>
+    </div>
+    <div data-role="footer" data-position="fixed">
+        <h4>Copyright</h4>
+    </div>
+</div>
+
+<div id="shopping" class="background_page1" data-url="shopping" data-role="page">
+    <div data-role="header">
+        <div data-role="controlgroup" data-type="horizontal" class="div_titel">
+            <a href="#index" data-role="button" data-icon="home">Home</a>
+        </div>
+        <div style="float:right">
+            <p class="titel">Shopping List</p>
+        </div>
+    </div>
+
+    <div data-role="content">
+        <ul id="shoppinglist" data-role="listview" data-inset="true" data-split-icon="delete">
+            <li data-role="list-divider">Your Shopping List</li>
+        </ul>
+    
+        <form id="form" method="GET">
+        <div data-role="fieldcontain">
+        <input type="text" name="inp" id="input_shopping" data-role="none" />
+        </div>
+        <input id="additem" type="button" data-icon="plus" data-inline="true" style="cursor:pointer" value="Add Item"/>
+        <input id="clearshopping" type="button" data-icon="delete" data-inline="true" style="cursor:pointer" value="Clear List"/>
+        </form>
+    </div>
+</div>
+
+<div id="todo" class="background_page2" data-url="todo" data-role="page">
+    <div data-role="header">
+        <div data-role="controlgroup" data-type="horizontal" class="div_titel">
+            <a href="#index" data-role="button" data-icon="home">Home</a>
+        </div>
+        <div style="float:right">
+            <p class="titel">To-Do List</p>
+        </div>
+    </div>
+
+    <div data-role="content">
+        <ul id="todolist" data-role="listview" data-inset="true" data-split-icon="delete">
+            <li data-role="list-divider">Your To-Do List</li>
+        </ul>
+    
+        <form id="form2" method="GET">
+        <div data-role="fieldcontain">
+        <input type="text" name="add-field" id="input_todo" data-role="none" />
+        </div>
+        <input id="addtodo" type="button" data-icon="plus" data-inline="true" style="cursor:pointer" value="Add To-Do"/>
+        <input id="removetodo" type="button" data-icon="delete" data-inline="true" style="cursor:pointer" value="Clear List"/>
+        </form>
+    </div>
+</div>
+
+<script>
+/**************** SHOPPING LIST **************************************/
+var shoppinglist = [];
+/* Read the new shopping_item and add it to the list */
+shoppinglist.additem = function(event) {
+    // Read the shopping_item from the input
+    var shopping_item=$('#input_shopping').val();
+    if (shopping_item) {
+        // Add the shopping_item to array and refresh list
+        shoppinglist.list[shoppinglist.list.length] = shopping_item;
+        shoppinglist.refresh_list();
+        // Clear the input
+        $('#input_shopping').val('');
+    }
+    event.preventDefault();
+};
+
+/* Recreate the entire list from the available list of shopping_items */
+shoppinglist.refresh_list = function() {
+    var $shopping_items = $('#shoppinglist'), i;
+    // Clear the existing shopping_item list
+    $shopping_items.empty();
+    if(shoppinglist.list.length) {
+        // Add the header
+        $shopping_items.append('<li class=added-item data-role="list-divider">Your Shopping List</li>');
+        for (var i=0; i<shoppinglist.list.length; i++){
+            // Append each shopping_item
+            var li = '<li><a data-shopping_item="' + i
+                    + '" href=#>' + shoppinglist.list[i] + '</a><a class=remove_shopping_item  href="#">Delete</a></li>'
+            $shopping_items.append(li);
+        }
+    }else{
+    // Add the header for addition of new shopping_items
+	    $shopping_items.append('<li data-role="list-divider">Add a Shopping Item</li>');
+	}
+    // Use jQuery Mobile's listview method to refresh
+    $shopping_items.listview('refresh');
+    // Store back the list
+    localStorage.shoppinglist_local_storage = JSON.stringify(shoppinglist.list || []);
+};
+
+// Initialize the shopping page
+if (typeof(localStorage) == 'undefined' ) {
+	alert('Je toestel ondersteunt geen HTML5 Local Storage. Deze app werkt daarom niet.');
+} else {
+	$(document).delegate('#shopping','pageinit', function() {
+														  
+		// If no list is already present, initialize it
+		if (!localStorage.shoppinglist_local_storage) {
+			localStorage.shoppinglist_local_storage = "[]";
+		}
+		// Load the list by parsing the JSON from localStorage
+		shoppinglist.list = JSON.parse(localStorage.shoppinglist_local_storage);
+		$('#additem').bind('vclick', shoppinglist.additem);
+		$('li a').live('vclick', function() {
+			shoppinglist.selected = $(this).data('shopping_item');
+		});
+		
+		// Refresh the list everytime the page is reloaded
+		$('#shopping').bind('pagebeforeshow', shoppinglist.refresh_list);
+	});
+}
+
+// Shopping list removal
+$("#clearshopping").live("vclick", function(event){
+	shoppinglist.list = [];									
+    shoppinglist.refresh_list();
+});
+
+/*
+function ClearSomeLocalStorage(startsWith) {
+    var myLength = startsWith.length;
+
+    Object.keys(localStorage) 
+        .forEach(function(key){ 
+            if (key.substring(0,myLength) == startsWith) {
+                localStorage.removeItem(key); 
+            } 
+        }); 
+}
+*/
+
+// Shopping item removal
+$("a.remove_shopping_item").live("vclick", function(event){
+	$('a.remove_shopping_item').bind('vclick', shoppinglist.list.splice(shoppinglist.selected,1));
+    shoppinglist.refresh_list();
+});
+
+// Make the transition in reverse for the buttons on the shopping and todo pages
+$(document).delegate('#shopping, #todo', 'pageinit', function(){
+    // We reverse transition for any button linking to index page
+    $('[href="#index"]').attr('data-direction','reverse');
+})
+
+
+/**************** TO-DO LIST **************************************/
+var todolist = [];
+/* Read the new todo_item and add it to the list */
+todolist.addtodo = function(event) {
+    // Read the todo_item from the input
+    var todo_item=$('#input_todo').val();
+    if (todo_item) {
+        // Add the todo_item to array and refresh list
+        todolist.list[todolist.list.length] = todo_item;
+        todolist.refresh_list();
+        // Clear the input
+        $('#input_todo').val('');
+    }
+    event.preventDefault();
+};
+
+/* Recreate the entire list from the available list of todo_items */
+todolist.refresh_list = function() {
+    var $todo_items = $('#todolist'), i;
+    // Clear the existing todo_item list
+    $todo_items.empty();
+    if(todolist.list.length) {
+        // Add the header
+        $todo_items.append('<li class=added-item data-role="list-divider">Your To-Do List</li>');
+        for (var i=0; i<todolist.list.length; i++){
+            // Append each todo_item
+            var li = '<li><a data-todo_item="' + i
+                    + '" href=#>' + todolist.list[i] + '</a><a class=remove_todo_item  href="#">Delete</a></li>'
+            $todo_items.append(li);
+        }
+    }else{
+    // Add the header for addition of new todo_items
+	    $todo_items.append('<li data-role="list-divider">Add a To-do Item</li>');
+	}
+    // Use jQuery Mobile's listview method to refresh
+    $todo_items.listview('refresh');
+    // Store back the list
+    localStorage.todolist_local_storage = JSON.stringify(todolist.list || []);
+};
+
+// Initialize the todo page
+$(document).delegate('#todo','pageinit', function() {
+													  
+    // If no list is already present, initialize it
+    if (!localStorage.todolist_local_storage) {
+        localStorage.todolist_local_storage = "[]";
+    }
+    // Load the list by parsing the JSON from localStorage
+    todolist.list = JSON.parse(localStorage.todolist_local_storage);
+    $('#addtodo').bind('vclick', todolist.addtodo);
+    $('li a').live('vclick', function() {
+        todolist.selected = $(this).data('todo_item');
+    });
+	
+    // Refresh the list everytime the page is reloaded
+    $('#todo').bind('pagebeforeshow', todolist.refresh_list);
+});
+
+// todo list removal
+$("#removetodo").live("vclick", function(event){
+	todolist.list = [];									
+    todolist.refresh_list();
+});
+
+// todo item removal
+$("a.remove_todo_item").live("vclick", function(event){
+	$('a.remove_todo_item').bind('vclick', todolist.list.splice(todolist.selected,1));
+    todolist.refresh_list();
+});
+</script>
+</body>
+</html>
+
